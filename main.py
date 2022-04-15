@@ -1,32 +1,42 @@
 # This is a sample Python script.
 import math
-from tkinter import *
-from math import asin
+import sys
+import pygame
 
 # global variable
+
+# there are colors
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+BLUE = (0, 0, 255)
+GREEN = (0, 255, 0)
+YELLOW = (239, 228, 176)
+RED = (255, 0, 0)
+
+FPS = 60  # FPS
+
 color_axes = '#000000'
 color_line = '#374534'
 color_sin = '#ad1111'
 color_arcsin = '#2311ad'
 
-canvas = Canvas()
 canvas_height = 800
 canvas_width = 800
 x0 = canvas_width / 2
 y0 = canvas_width * 1 / 3
 
-r = 1
-n = 10
-h = 1
+screen = pygame.display.set_mode((canvas_width, canvas_height))
+
+clock = pygame.time.Clock()
 
 
 class GeometryObject:
-    def __init__(self, fild_or_cylinder, row, step, height, radius, line_notLine_notLine2):
+    def __init__(self, fild_or_cylinder, row, step, height, diameter, line_notLine_notLine2):
         self.fild_or_cylinder = fild_or_cylinder
         self.row = row
         self.step = step
         self.height = height
-        self.radius = radius
+        self.diameter = diameter
         self.line_notLine_notLine2 = line_notLine_notLine2
         self.coordinate_x = [[0] * (self.row + 1) for i in range(2 * (self.row + 1))]
         self.coordinate_y = [[0] * (self.row + 1) for i in range(2 * (self.row + 1))]
@@ -46,30 +56,87 @@ class GeometryObject:
         else:
             self.make_2d_notLine2()
 
+        # move the object
+
+    def move_the_object(self, dx, dy):
+        self.move_it(dx, dy)
+        if self.line_notLine_notLine2 == "line":
+            self.make_2d_line()
+        elif self.line_notLine_notLine2 == "notLine":
+            self.make_2d_notLine()
+        else:
+            self.make_2d_notLine2()
+
+    def move_it(self, dx, dy):
+        for k in range(0, 2 * (self.row + 1)):
+            for i in range(0, (self.row + 1)):
+                self.coordinate_x[k][i] += dx
+                self.coordinate_z[k][i] += dy
+
     def make_2d_line(self):
+        color = color_line
         x2d = []
         y2d = []
-        for k in range(0, 2*(self.row + 1)):
+        for k in range(0, 2 * (self.row + 1)):
             for i in range(0, (self.row + 1)):
-                if self.coordinate_z[k][i] == 0:
-                    z = 0.1
+                if self.coordinate_z[k][i] <= 0:
+                    z = 0.01
                 else:
                     z = self.coordinate_z[k][i]
-                x = self.coordinate_x[k][i] * self.radius / z
-                y = self.coordinate_y[k][i] * self.radius / z
+                x = self.coordinate_x[k][i] * self.diameter / z
+                y = self.coordinate_y[k][i] * self.diameter / z
                 x2d.append(x)
                 y2d.append(y)
 
-            self.draw_a_line_from_array(x2d, y2d)
+            self.draw_a_line_from_array(x2d, y2d, color)
             x2d = []
             y2d = []
 
     def make_2d_notLine(self):
-        pass
+        color = color_sin
+        x2d = []
+        y2d = []
+        for k in range(0, 2 * (self.row + 1)):
+            for i in range(0, (self.row + 1)):
+                if self.coordinate_z[k][i] <= 0:
+                    z = 0.01
+                else:
+                    z = self.coordinate_z[k][i]
+                x = self.coordinate_x[k][i]
+                x1 = self.diameter * x * z / (z ** 2 + x ** 2)
+                y = self.coordinate_y[k][i]
+                y1 = self.diameter * y * z / (z ** 2 + y ** 2)
+                if abs(y / z) <= 1 and abs(x / z) <= 1:
+                    x2d.append(x1)
+                    y2d.append(y1)
 
+            if len(x2d) >= 2:
+                self.draw_a_line_from_array(x2d, y2d, color)
+            x2d = []
+            y2d = []
 
     def make_2d_notLine2(self):
-        pass
+        color = color_arcsin
+        x2d = []
+        y2d = []
+        for k in range(0, 2 * (self.row + 1)):
+            for i in range(0, (self.row + 1)):
+                if self.coordinate_z[k][i] <= 0:
+                    z = 0.01
+                else:
+                    z = self.coordinate_z[k][i]
+                x = self.coordinate_x[k][i]
+                x1 = self.diameter * math.asin(x / (z ** 2 + x ** 2)**0.5)
+                y = self.coordinate_y[k][i]
+                y1 = self.diameter * math.asin(y / (z ** 2 + y ** 2)**0.5)
+                #if abs(y / z) <= 1 and abs(x / z) <= 1:
+                x2d.append(x1)
+                y2d.append(y1)
+
+            if len(x2d) >= 2:
+                self.draw_a_line_from_array(x2d, y2d, color)
+            x2d = []
+            y2d = []
 
     def make_field(self):
         k = 0
@@ -98,177 +165,84 @@ class GeometryObject:
             k += 1
 
     @staticmethod
-    def draw_a_line_from_array(array_x, array_y):
+    def draw_a_line_from_array(array_x, array_y, color):
         global x0, y0
-        global canvas
         x1 = array_x[0]
         y1 = array_y[0]
         for index in range(1, len(array_x)):
             x2 = array_x[index]
             y2 = array_y[index]
-            canvas.create_line(x1 + x0, y1 + y0,
-                               x2 + x0, y2 + y0,
-                               fill=color_line)
+            pygame.draw.line(screen, color,
+                             (x1 + x0, y1 + y0),
+                             (x2 + x0, y2 + y0),
+                             )
+            x1 = x2
+            y1 = y2
 
     def make_cylinder(self):
         pass
 
 
-def init_canvas():
-    global canvas, canvas_height, canvas_width
-    master = Tk()
-    canvas = Canvas(master,
-                    width=canvas_width,
-                    height=canvas_height)
-    canvas.pack()
-
-
 def draw_axes():
-    canvas.create_line(0, y0,
-                       canvas_width, y0,
-                       fill=color_axes)
+    pygame.draw.line(screen, color_axes,
+                     (0, y0),
+                     (canvas_width, y0), )
 
 
-def draw_line_perspective():
-    draw_fild_z_line()
-    draw_fild_x_line()
+def main_loop_start():
+    step = 1
+    while True:  # the main cycle
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit(0)
 
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_DOWN:
+                    screen.fill(WHITE)
+                    fild_line.move_the_object(0, step)
+                    fild_not_line.move_the_object(0, step)
+                    fild_not_line2.move_the_object(0, step)
+                    draw_axes()
+                elif event.key == pygame.K_UP:
+                    screen.fill(WHITE)
+                    fild_line.move_the_object(0, -step)
+                    fild_not_line.move_the_object(0, -step)
+                    fild_not_line2.move_the_object(0, -step)
+                    draw_axes()
+                elif event.key == pygame.K_LEFT:
+                    screen.fill(WHITE)
+                    fild_line.move_the_object(-step, 0)
+                    fild_not_line.move_the_object(-step, 0)
+                    fild_not_line2.move_the_object(-step, 0)
+                    draw_axes()
+                elif event.key == pygame.K_RIGHT:
+                    screen.fill(WHITE)
+                    fild_line.move_the_object(step, 0)
+                    fild_not_line.move_the_object(step, 0)
+                    fild_not_line2.move_the_object(step, 0)
+                    draw_axes()
 
-def draw_fild_z_line():
-    global r, n, h
-    for i in range(int(-n / 2), int(n / 2)):
-        x1 = i
-        y1 = h
-
-        for j in range(1, n):
-            y = h
-            x = i
-            z = j
-            y2 = y * r / z
-            x2 = x * r / z
-            canvas.create_line(x1 + x0, y1 + y0,
-                               x2 + x0, y2 + y0,
-                               fill=color_line)
-            x1 = x2
-            y1 = y2
-
-
-def draw_fild_x_line():
-    global r, n, h
-    for j in range(1, n):
-        x1 = j
-        y1 = h
-        for i in range(int(-n / 2), int(n / 2)):
-            y = h
-            x = i
-            z = j
-            y2 = y * r / z
-            x2 = x * r / z
-            canvas.create_line(x1 + x0, y1 + y0,
-                               x2 + x0, y2 + y0,
-                               fill=color_line)
-            x1 = x2
-            y1 = y2
-
-
-def draw_line_perspective2():
-    global r, n, h
-    r *= 4
-    draw_fild_z_line2()
-    draw_fild_x_line2()
-
-
-def draw_fild_z_line2():
-    global r, n, h
-    for i in range(int(-n / 2), int(n / 2)):
-        x1 = i
-        y1 = h
-        for j in range(1, n):
-            y = h
-            x = i
-            z = j
-            y2 = y * r / z * 1 / ((y ** 2 + z ** 2) ** 0.5)
-            x2 = x * r / z * 1 / ((x ** 2 + z ** 2) ** 0.5)
-            canvas.create_line(x1 + x0, y1 + y0,
-                               x2 + x0, y2 + y0,
-                               fill=color_sin)
-            x1 = x2
-            y1 = y2
-
-
-def draw_fild_x_line2():
-    global r, n, h
-    for j in range(1, n):
-        x1 = j
-        y1 = h
-        for i in range(int(-n / 2), int(n / 2)):
-            y = h
-            x = i
-            z = j
-            y2 = y * r / z * 1 / ((y ** 2 + z ** 2) ** 0.5)
-            x2 = x * r / z * 1 / ((x ** 2 + z ** 2) ** 0.5)
-            canvas.create_line(x1 + x0, y1 + y0,
-                               x2 + x0, y2 + y0,
-                               fill=color_sin)
-            x1 = x2
-            y1 = y2
-
-
-def draw_line_perspective3():
-    global r, n, h
-    r = 4
-    draw_fild_z_line3()
-    draw_fild_x_line3()
-
-
-def draw_fild_z_line3():
-    global r, n, h
-    for i in range(int(-n / 2), int(n / 2)):
-        x1 = i
-        y1 = h
-        for j in range(1, n):
-            y = h
-            x = i
-            z = j
-            y2 = r * (y / z + 1 / 2 * (y / z) ** 3 / 3 + 1 / 2 * 3 / 4 * (y / z) ** 5 / 5)
-            x2 = r * (x / z + 1 / 2 * (x / z) ** 3 / 3 + 1 / 2 * 3 / 4 * (x / z) ** 5 / 5)
-            canvas.create_line(x1 + x0, y1 + y0,
-                               x2 + x0, y2 + y0,
-                               fill=color_arcsin)
-            x1 = x2
-            y1 = y2
-
-
-def draw_fild_x_line3():
-    global r, n, h
-    for j in range(1, n):
-        x1 = j
-        y1 = h
-        for i in range(int(-n / 2), int(n / 2)):
-            y = h
-            x = i
-            z = j
-            y2 = r * (y / z + 1 / 2 * (y / z) ** 3 / 3 + 1 / 2 * 3 / 4 * (y / z) ** 5 / 5)
-            x2 = r * (x / z + 1 / 2 * (x / z) ** 3 / 3 + 1 / 2 * 3 / 4 * (x / z) ** 5 / 5)
-            canvas.create_line(x1 + x0, y1 + y0,
-                               x2 + x0, y2 + y0,
-                               fill=color_arcsin)
-            x1 = x2
-            y1 = y2
+        pygame.display.flip()  # draw all the things
+        clock.tick(FPS)  # neu iteration
 
 
 if __name__ == '__main__':
-    init_canvas()
+    diameter = canvas_width
+    height = 2
+    n = 100
+    step = 1
+    pygame.display.set_caption("Perspective")
+    screen.fill(WHITE)
 
-    radius = 100
-    height = 10
-    n = 40
-    step = 3
-
-    fild = GeometryObject("fild", n, step, height, radius, "line")    #(fild_or_cylinder, row, step, height, radius, line_notLine_notLine2)
-
+    fild_line = GeometryObject(
+        "fild", n, step, height, diameter, "line")
+    # (fild_or_cylinder, row, step, height, radius, line_notLine_notLine2)
+    fild_not_line = GeometryObject(
+        "fild", n, step, height, diameter, "notLine")
+    # (fild_or_cylinder, row, step, height, radius, line_notLine_notLine2)
+    fild_not_line2 = GeometryObject(
+        "fild", n, step, height, diameter, "notLine2")
+    # (fild_or_cylinder, row, step, height, radius, line_notLine_notLine2)
     draw_axes()
-
-    mainloop()
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    main_loop_start()

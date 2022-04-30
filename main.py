@@ -21,6 +21,7 @@ color_line = '#374534'
 color_sin = '#ad1111'
 color_arcsin = '#2311ad'
 color_sphere = '#37eb34'
+color_2atan = BLUE
 
 canvas_height = 800
 canvas_width = 800
@@ -174,7 +175,7 @@ class GeometryObject:
             y2d = []
 
     def make_2d_2atan(self):
-        color = color_sphere
+        color = color_2atan
         x2d = []
         y2d = []
         for k in range(0, 2 * (self.row + 1)):
@@ -185,11 +186,18 @@ class GeometryObject:
                     z = self.coordinate_z[k][i]
                 x = self.coordinate_x[k][i]
                 y = self.coordinate_y[k][i]
-                l = self.diameter * atan(z / (x ** 2 + y ** 2) ** 0.5)
-                alpha = atan(x / y)
-                x = l * cos(alpha)
-                y = l * sin(alpha)
+                l = self.diameter * atan(((x ** 2 + y ** 2) ** 0.5) / z)
+                if y != 0:
+                    alpha = atan(x / y)
+                else:
+                    alpha = atan(x / 0.001)
 
+                if y > 0:
+                    x = l * sin(alpha)
+                    y = l * cos(alpha)
+                else:
+                    x = -l * sin(alpha)
+                    y = -l * cos(alpha)
                 x2d.append(x)
                 y2d.append(y)
 
@@ -317,11 +325,11 @@ if __name__ == '__main__':
 
     to_draw = "field"
 
-    if to_draw == "cylinder":
+    if to_draw == "field":
         field_line = GeometryObject(
             "field", n, step, height, diameter, "line")
         field_not_line = GeometryObject(
-            "field", n, step, height, diameter, "line")
+            "field", n, step, height, diameter, "sphere")
         field_not_line2 = GeometryObject(
             "field", n, step, height, diameter, "2atan")
 
@@ -333,7 +341,7 @@ if __name__ == '__main__':
         cylinder_not_line = GeometryObject(
             "cylinder", n, step, height, diameter, "2atan")
         cylinder_not_line2 = GeometryObject(
-            "cylinder", n, step, height, diameter, "line")
+            "cylinder", n, step, height, diameter, "sphere")
         group_of_cylinders = [cylinder_line, cylinder_not_line2, cylinder_not_line]
         group_to_draw = group_of_cylinders
 

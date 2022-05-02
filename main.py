@@ -325,11 +325,11 @@ if __name__ == '__main__':
 
     to_draw = "field"
 
-    if to_draw == "field":
+    if to_draw == "cylinder":
         field_line = GeometryObject(
             "field", n, step, height, diameter, "line")
         field_not_line = GeometryObject(
-            "field", n, step, height, diameter, "sphere")
+            "field", n, step, height, diameter, "line")
         field_not_line2 = GeometryObject(
             "field", n, step, height, diameter, "2atan")
 
@@ -341,7 +341,7 @@ if __name__ == '__main__':
         cylinder_not_line = GeometryObject(
             "cylinder", n, step, height, diameter, "2atan")
         cylinder_not_line2 = GeometryObject(
-            "cylinder", n, step, height, diameter, "sphere")
+            "cylinder", n, step, height, diameter, "line")
         group_of_cylinders = [cylinder_line, cylinder_not_line2, cylinder_not_line]
         group_to_draw = group_of_cylinders
 
